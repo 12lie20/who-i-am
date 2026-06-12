@@ -7,6 +7,18 @@ function generateRoomCode(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing env vars:', {
+        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      })
+      return NextResponse.json(
+        { error: 'Server configuration error: missing environment variables' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
     const { categoryId, playerId, timerSeconds } = body
 
@@ -27,8 +39,9 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (categoryError || !category) {
+      console.error('Category error:', categoryError)
       return NextResponse.json(
-        { error: 'Category not found' },
+        { error: `Category not found: ${categoryError?.message || 'no data'}` },
         { status: 404 }
       )
     }
@@ -40,8 +53,9 @@ export async function POST(request: NextRequest) {
       .eq('category_id', categoryId)
 
     if (imagesError || !images || images.length < 2) {
+      console.error('Images error:', imagesError, 'count:', images?.length)
       return NextResponse.json(
-        { error: 'Not enough images in this category (minimum 2 required)' },
+        { error: `Not enough images: ${imagesError?.message || `found ${images?.length || 0}`}` },
         { status: 400 }
       )
     }
@@ -94,7 +108,7 @@ export async function POST(request: NextRequest) {
     if (roomError || !room) {
       console.error('Room creation error:', roomError)
       return NextResponse.json(
-        { error: 'Failed to create room' },
+        { error: `Failed to create room: ${roomError?.message || 'unknown'}` },
         { status: 500 }
       )
     }
@@ -106,7 +120,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Create room error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Internal server error: ${error instanceof Error ? error.message : 'unknown'}` },
       { status: 500 }
     )
   }
