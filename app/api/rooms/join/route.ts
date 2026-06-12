@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     if (updateError || !updatedRoom) {
       console.error('Room update error:', updateError)
       return NextResponse.json(
-        { error: 'Failed to join room' },
+        { error: `Failed to join room: ${updateError?.message || 'unknown'}` },
         { status: 500 }
       )
     }
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Join room error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Internal server error: ${error instanceof Error ? error.message : 'unknown'}` },
       { status: 500 }
     )
   }
