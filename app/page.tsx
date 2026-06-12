@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Gamepad2, LogIn, Headphones } from 'lucide-react'
+import { Gamepad2, LogIn, Headphones, Users } from 'lucide-react'
 import Header from './components/Header'
 import Card from './components/Card'
 import Button from './components/Button'
 import Input from './components/Input'
+import HowToPlay from './components/HowToPlay'
+import ParticlesBackground from './components/ParticlesBackground'
+import TimerSelect from './components/TimerSelect'
 
 interface Category {
   id: string
@@ -33,6 +36,7 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [timerSeconds, setTimerSeconds] = useState<number | null>(null)
 
   // Join room state
   const [roomCode, setRoomCode] = useState('')
@@ -73,7 +77,11 @@ export default function HomePage() {
       const res = await fetch('/api/rooms/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId: selectedCategory, playerId }),
+        body: JSON.stringify({
+          categoryId: selectedCategory,
+          playerId,
+          timerSeconds,
+        }),
       })
 
       const data = await res.json()
@@ -89,7 +97,7 @@ export default function HomePage() {
     } finally {
       setIsCreating(false)
     }
-  }, [selectedCategory, playerId, router])
+  }, [selectedCategory, playerId, timerSeconds, router])
 
   // Join room
   const handleJoin = useCallback(async () => {
@@ -132,6 +140,8 @@ export default function HomePage() {
 
   return (
     <>
+      <ParticlesBackground />
+
       <div className="page-main">
         <div className="container">
           <Header />
@@ -146,7 +156,20 @@ export default function HomePage() {
               اختر تصنيفاً وأنشئ غرفة، ثم شارك الكود مع صديقك.
               كل لاعب يرى صورة الآخر ويحاول تخمين شخصيته المخفية أولاً!
             </p>
+            <div className="hero__stats">
+              <div className="hero__stat">
+                <Users size={18} />
+                <span>{categories.length} تصنيفات</span>
+              </div>
+              <div className="hero__stat">
+                <Gamepad2 size={18} />
+                <span>86+ شخصية</span>
+              </div>
+            </div>
           </section>
+
+          {/* How to Play */}
+          <HowToPlay />
 
           {/* Two-column grid */}
           <div className="home-grid">
@@ -177,11 +200,14 @@ export default function HomePage() {
                       }`}
                       onClick={() => setSelectedCategory(cat.id)}
                     >
-                      {cat.name}
+                      {cat.icon && <span className="category-grid__item-icon">{cat.icon}</span>}
+                      <span>{cat.name}</span>
                     </button>
                   ))}
                 </div>
               )}
+
+              <TimerSelect value={timerSeconds} onChange={setTimerSeconds} />
 
               {createError && (
                 <p style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>{createError}</p>
@@ -194,7 +220,7 @@ export default function HomePage() {
                 disabled={!selectedCategory}
                 onClick={handleCreate}
               >
-                إنشاء
+                إنشاء غرفة
               </Button>
             </Card>
 

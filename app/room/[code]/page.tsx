@@ -10,6 +10,11 @@ import Input from '@/app/components/Input'
 import Modal from '@/app/components/Modal'
 import LoadingSpinner from '@/app/components/LoadingSpinner'
 import CopyButton from '@/app/components/CopyButton'
+import ShareButton from '@/app/components/ShareButton'
+import GameTimer from '@/app/components/GameTimer'
+import HintButton from '@/app/components/HintButton'
+import GuessCounter from '@/app/components/GuessCounter'
+import Confetti from '@/app/components/Confetti'
 import { useGameRoom } from './useGameRoom'
 
 function getPlayerId(): string {
@@ -35,15 +40,24 @@ export default function GameRoomPage({
     type: 'error' | 'success'
     message: string
   } | null>(null)
+  const [hintLoading, setHintLoading] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
 
   useEffect(() => {
     setPlayerId(getPlayerId())
   }, [])
 
-  const { gameState, submitGuess, guessHistory, isSubmitting } = useGameRoom(
+  const { gameState, submitGuess, requestHint, guessHistory, isSubmitting } = useGameRoom(
     code,
     playerId
   )
+
+  // Show confetti when game finishes and player wins
+  useEffect(() => {
+    if (gameState.status === 'finished' && gameState.winnerId === playerId) {
+      setShowConfetti(true)
+    }
+  }, [gameState.status, gameState.winnerId, playerId])
 
   const handleGuess = useCallback(async () => {
     const trimmed = guess.trim()
@@ -59,6 +73,12 @@ export default function GameRoomPage({
       setFeedback({ type: 'error', message: result.message })
     }
   }, [guess, submitGuess])
+
+  const handleHint = useCallback(async () => {
+    setHintLoading(true)
+    await requestHint()
+    setHintLoading(false)
+  }, [requestHint])
 
   // Loading state
   if (gameState.status === 'loading') {
@@ -113,7 +133,16 @@ export default function GameRoomPage({
               <p className="room-code__value">{code.toUpperCase()}</p>
             </div>
 
-            <CopyButton text={code.toUpperCase()} />
+            <div className="waiting-screen__actions">
+              <CopyButton text={code.toUpperCase()} />
+              <ShareButton roomCode={code.toUpperCase()} />
+            </div>
+
+            {gameState.timerSeconds && (
+              <p className="waiting-screen__timer-info">
+                ⏱️ المؤقت: {Math.floor(gameState.timerSeconds / 60)} دقائق
+              </p>
+            )}
 
             <p className="waiting-screen__instruction">
               شارك هذا الكود مع صديقك
@@ -138,6 +167,7 @@ export default function GameRoomPage({
       <div className="page-main">
         <div className="container">
           <Header />
+          {showConfetti && <Confetti />}
           <Modal
             isOpen={true}
             onClose={() => router.push('/')}
@@ -149,9 +179,15 @@ export default function GameRoomPage({
               </div>
 
               {isWinner ? (
-                <p className="result-modal__winner">مبروك! لقد فزت!</p>
+                <p className="result-modal__winner">🎉 مبروك! لقد فزت!</p>
               ) : (
                 <p className="result-modal__loser">اللاعب الآخر فاز!</p>
+              )}
+
+              {gameState.guessCount > 0 && (
+                <p className="result-modal__stats">
+                  عدد محاولاتك: {gameState.guessCount}
+                </p>
               )}
 
               <div className="result-modal__images">
@@ -206,6 +242,17 @@ export default function GameRoomPage({
       <div className="container">
         <Header />
 
+        {/* Game status bar */}
+        <div className="game-status-bar">
+          <GuessCounter count={gameState.guessCount} />
+          {gameState.timerSeconds && gameState.startedAt && (
+            <GameTimer
+              totalSeconds={gameState.timerSeconds}
+              startedAt={gameState.startedAt}
+            />
+          )}
+        </div>
+
         <div className="game-layout">
           {/* Right panel — opponent's image */}
           <Card variant="glass" className="game-layout__opponent">
@@ -232,6 +279,15 @@ export default function GameRoomPage({
               <span className="mystery-avatar__question">؟</span>
             </div>
             <p className="mystery-avatar__label">من أنت؟</p>
+
+            {/* Hint section */}
+            <HintButton
+              hints={gameState.hints}
+              hintsUsed={gameState.hintsUsed}
+              maxHints={3}
+              onRequestHint={handleHint}
+              loading={hintLoading}
+            />
 
             <div className="guess-form">
               <div className="guess-form__row">

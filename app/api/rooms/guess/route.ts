@@ -41,11 +41,14 @@ export async function POST(request: NextRequest) {
     // Determine which image belongs to the guessing player
     // Player 1's image is what Player 1 must guess (it's on their forehead)
     let myImageId: string | null = null
+    let guessField: string | null = null
 
     if (playerId === room.player_1_id) {
       myImageId = room.player_1_image_id
+      guessField = 'player_1_guesses'
     } else if (playerId === room.player_2_id) {
       myImageId = room.player_2_image_id
+      guessField = 'player_2_guesses'
     } else {
       return NextResponse.json(
         { error: 'You are not a participant in this room' },
@@ -59,6 +62,16 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Increment guess counter
+    const currentGuesses: number = room[guessField] || 0
+    await supabase
+      .from('rooms')
+      .update({
+        [guessField]: currentGuesses + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', room.id)
 
     // Fetch the character name for the player's image
     const { data: image, error: imageError } = await supabase
@@ -84,6 +97,7 @@ export async function POST(request: NextRequest) {
         .update({
           status: 'finished',
           winner_id: playerId,
+          [guessField]: currentGuesses + 1,
           updated_at: new Date().toISOString(),
         })
         .eq('id', room.id)
@@ -105,6 +119,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       correct: false,
       message: 'إجابة خاطئة، حاول مرة أخرى',
+      guessCount: currentGuesses + 1,
     })
   } catch (error) {
     console.error('Guess error:', error)

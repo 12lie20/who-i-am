@@ -49,12 +49,11 @@ export async function GET(
       return NextResponse.json({
         status: 'waiting',
         roomCode: room.room_code,
+        timerSeconds: room.timer_seconds,
       })
     }
 
     // ANTI-CHEAT: Only fetch the OPPONENT's image, never the player's own
-    // Player 1's image is what Player 1 must guess (it's on their forehead)
-    // So Player 2 sees Player 1's image, and vice versa
     const opponentImageId = isPlayer1
       ? room.player_2_image_id
       : room.player_1_image_id
@@ -72,6 +71,21 @@ export async function GET(
       )
     }
 
+    // Fetch hints for the player's own image (they need hints about themselves)
+    const myImageId = isPlayer1
+      ? room.player_1_image_id
+      : room.player_2_image_id
+
+    const { data: myImageHints } = await supabase
+      .from('images')
+      .select('hints')
+      .eq('id', myImageId)
+      .single()
+
+    const myGuesses = isPlayer1 ? room.player_1_guesses : room.player_2_guesses
+    const myHintsUsed = isPlayer1 ? room.player_1_hints_used : room.player_2_hints_used
+    const hints: string[] = myImageHints?.hints || []
+
     // PLAYING: return opponent's image only
     if (room.status === 'playing') {
       return NextResponse.json({
@@ -81,15 +95,17 @@ export async function GET(
           url: opponentImage.image_url,
           name: opponentImage.character_name,
         },
+        timerSeconds: room.timer_seconds,
+        startedAt: room.started_at,
+        guessCount: myGuesses || 0,
+        hintsUsed: myHintsUsed || 0,
+        hints: hints.slice(0, myHintsUsed || 0),
+        totalHints: hints.length,
       })
     }
 
     // FINISHED: reveal both images
     if (room.status === 'finished') {
-      const myImageId = isPlayer1
-        ? room.player_1_image_id
-        : room.player_2_image_id
-
       const { data: myImage, error: myImageError } = await supabase
         .from('images')
         .select('image_url, character_name')
@@ -115,6 +131,7 @@ export async function GET(
           name: myImage.character_name,
         },
         winnerId: room.winner_id,
+        guessCount: myGuesses || 0,
       })
     }
 

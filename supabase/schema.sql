@@ -24,6 +24,7 @@ CREATE TABLE images (
   character_name           TEXT NOT NULL,
   character_name_normalized TEXT NOT NULL,
   image_url                TEXT NOT NULL,
+  hints                    JSONB DEFAULT '[]'::jsonb,
   created_at               TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -43,6 +44,12 @@ CREATE TABLE rooms (
   player_1_image_id UUID REFERENCES images(id) ON DELETE SET NULL,
   player_2_image_id UUID REFERENCES images(id) ON DELETE SET NULL,
   winner_id        TEXT,
+  timer_seconds    INTEGER,
+  player_1_guesses INTEGER NOT NULL DEFAULT 0,
+  player_2_guesses INTEGER NOT NULL DEFAULT 0,
+  player_1_hints_used INTEGER NOT NULL DEFAULT 0,
+  player_2_hints_used INTEGER NOT NULL DEFAULT 0,
+  started_at       TIMESTAMPTZ,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );

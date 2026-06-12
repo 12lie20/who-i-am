@@ -8,7 +8,7 @@ function generateRoomCode(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { categoryId, playerId } = body
+    const { categoryId, playerId, timerSeconds } = body
 
     if (!categoryId || !playerId) {
       return NextResponse.json(
@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
         player_1_id: playerId,
         player_1_image_id: player1ImageId,
         player_2_image_id: player2ImageId,
+        timer_seconds: timerSeconds || null,
       })
       .select('id, room_code')
       .single()

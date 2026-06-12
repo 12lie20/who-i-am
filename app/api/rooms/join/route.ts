@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       .update({
         player_2_id: playerId,
         status: 'playing',
+        started_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', room.id)
