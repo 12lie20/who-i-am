@@ -50,9 +50,9 @@ export async function POST(request: NextRequest) {
     const hintsUsedField = isPlayer1 ? 'player_1_hints_used' : 'player_2_hints_used'
     const currentHintsUsed: number = room[hintsUsedField] || 0
 
-    if (currentHintsUsed >= 3) {
+    if (currentHintsUsed >= 1) {
       return NextResponse.json(
-        { error: 'لقد استخدمت جميع التلميحات المتاحة' },
+        { error: 'لقد استخدمت التلميح الوحيد المتاح لك' },
         { status: 400 }
       )
     }
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       hint: hints[nextHintIndex],
       hintsUsed: currentHintsUsed + 1,
-      hintsRemaining: 3 - (currentHintsUsed + 1),
+      hintsRemaining: 1 - (currentHintsUsed + 1),
     })
   } catch (error) {
     console.error('Hint error:', error)

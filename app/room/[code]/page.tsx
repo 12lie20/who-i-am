@@ -288,7 +288,7 @@ export default function GameRoomPage({
             <HintButton
               hints={gameState.hints}
               hintsUsed={gameState.hintsUsed}
-              maxHints={3}
+              maxHints={1}
               onRequestHint={handleHint}
               loading={hintLoading}
             />

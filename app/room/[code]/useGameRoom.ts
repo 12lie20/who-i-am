@@ -77,7 +77,7 @@ export function useGameRoom(code: string, playerId: string) {
         guessCount: data.guessCount ?? 0,
         hintsUsed: data.hintsUsed ?? 0,
         hints: data.hints ?? [],
-        totalHints: data.totalHints ?? 3,
+        totalHints: data.totalHints ?? 1,
       }))
     } catch {
       setGameState((prev) => ({
