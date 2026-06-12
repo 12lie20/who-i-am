@@ -18,7 +18,7 @@ export default function HintButton({
   loading = false,
 }: HintButtonProps) {
   const remaining = maxHints - hintsUsed
-  const canUseHint = remaining > 0 && hintsUsed < hints.length
+  const canUseHint = remaining > 0 && hintsUsed < maxHints
 
   return (
     <div className="hint-section">
