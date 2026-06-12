@@ -127,7 +127,7 @@ export function useGameRoom(code: string, playerId: string) {
   )
 
   // Request a hint
-  const requestHint = useCallback(async (): Promise<{ hint: string } | null> => {
+  const requestHint = useCallback(async (): Promise<{ hint?: string; error?: string }> => {
     try {
       const res = await fetch('/api/rooms/hint', {
         method: 'POST',
@@ -138,7 +138,7 @@ export function useGameRoom(code: string, playerId: string) {
       const data = await res.json()
 
       if (!res.ok) {
-        return null
+        return { error: data.error || 'فشل في الحصول على تلميح' }
       }
 
       setGameState((prev) => ({
@@ -149,7 +149,7 @@ export function useGameRoom(code: string, playerId: string) {
 
       return { hint: data.hint }
     } catch {
-      return null
+      return { error: 'فشل الاتصال بالخادم' }
     }
   }, [code, playerId])
 

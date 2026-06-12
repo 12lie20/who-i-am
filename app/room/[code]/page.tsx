@@ -76,8 +76,12 @@ export default function GameRoomPage({
 
   const handleHint = useCallback(async () => {
     setHintLoading(true)
-    await requestHint()
+    setFeedback(null)
+    const result = await requestHint()
     setHintLoading(false)
+    if (result.error) {
+      setFeedback({ type: 'error', message: result.error })
+    }
   }, [requestHint])
 
   // Loading state
